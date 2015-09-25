@@ -1,0 +1,78 @@
+﻿<!DOCTYPE class="" html>
+<html class="" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="assets/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="assets/css/main.css" rel="stylesheet" />
+</head>
+<body >
+    <div class="content">
+
+        <iframe id="iApp" name="iApp" src="http://10.172.0.170:1338/createfile" style="width:50%; display:none"></iframe>
+        <div class="dvClone" style="width:49%">
+
+        </div>
+
+    </div>
+
+    <ul>
+        <li><button onclick="getScreen()">Get Screen</button></li>
+        <li><button onclick="clean()">Varidate</button></li>
+    </ul>
+
+
+   
+    
+    
+    
+    
+    
+    
+     <script src="assets/js/jquery-1.10.2.min.js"></script>
+    <script src="assets/js/porthole.min.js"></script>
+    
+     <script type="text/javascript">
+
+         var dvClone = $('.dvClone');
+         function getScreen() {
+             sendMessage({ event: 'getScreen' });
+         }
+
+         function clean() {
+             dvClone.html('');
+         }
+
+
+
+         function onMessage(messageEvent) {
+             
+             var event = JSON.parse(messageEvent.data);
+             
+             switch(event.event){
+                 case 'screenData':
+                     dvClone.append(event.data);
+                     break;
+             }
+         }
+
+         $(document).ready(function () {
+             windowProxy = new Porthole.WindowProxy('http://10.172.0.170:1338', 'iApp');
+             windowProxy.addEventListener(onMessage);
+         });
+
+         function sendMessage(obj) {
+             windowProxy.post(JSON.stringify(obj));
+         }
+
+
+
+     </script>
+
+
+    
+
+   
+</body>
+</html>
+

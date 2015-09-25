@@ -1,0 +1,34 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+</head>
+<body ng-app="testApp" ng-controller="textController">
+
+
+
+
+
+    <grid-view allow-sorting="" allow-pagging="" allow-search="" page-size="10" gvdata-source="form.directory" empty-text="">
+        <columns>
+            <column header-text="Name"  text="name | uppercase" ></column>
+            <column header-text="Phone" data-field="phone"></column>
+            <templateColumn>
+                <button class="btn btn-danger" ng-click="pruebame(name)">Pruebame</button>
+            </templateColumn>
+        </columns>
+    </grid-view>
+
+    
+
+
+
+
+    <script src="assets/js/jquery-1.10.2.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/angular.min.js"></script>
+    <script src="assets/js/ng-grid-view.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
