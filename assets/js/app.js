@@ -13,7 +13,12 @@ app.controller('textController', ['$scope', function ($scope) {
         { name: 'Samuel', phone: '809-566-5985' }
     ]
 
-    $scope.pruebame = function () {
-        alert('esta es mi prueba hehehe');
+    $scope.pruebame = function (name) {
+        debugger
+        alert('esta es mi prueba hehehe ' + name);
+    }
+
+    $scope.procesar = function (name) {
+        return 'procesado el nombre de ' + name;
     }
 }]);

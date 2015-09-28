@@ -3,120 +3,79 @@
 var app = angular.module('ngGridView', []);
 
 
-app.directive('compile', ['$compile', function ($compile) {
+app.directive('compile', ['$compile', '$parse', '$interpolate', function ($compile, $parse, $interpolate) {
 
     return {
         restrict: 'A',
         link: function (scope, element, attrs) {
-            debugger
-            scope.$watch(
-                function (scope) {
-                    //return scope.$eval(attrs.compile);
-                    return attrs.compile;
-                },
-
-                function (value) {
-                    debugger
-                    element.html(value);
-                    $compile(element.contents())(scope);
-                }
-
-
-           )
-
+            var html = angular.copy(attrs.compile);
+            element.removeAttr('compile');
+            element.html($interpolate(html)(scope.$parent.$parent.row));
+            $compile(element.contents())(scope);
         }
     }
 
 }]);
 
 
-app.directive('gridColumn', ['$compile', '$parse', function ($compile, $parse) {
+app.directive('gridColumn', ['$compile', '$interpolate', function ($compile, $interpolate) {
 
     return {
         restrict: 'E',
-        scope: {
-            row: '=',
-            column: '='
-        },
         template: "<div ng-switch on='column.type'>" +
                         "<div ng-switch-when='template' compile='{{column.template}}'></div>" +
                         "<div ng-switch-when='bound'>" +
                             "{{ row[column.dataField] || column.text || column.nullText }}" +
                         "</div>" +
                         "<div ng-switch-when='counter'>" +
-                            "{{ $parent.$index + 1 }}" +
+                            "{{ $parent.$parent.$index + 1 }}" +
                         "</div>" +
                   "</div>",
         replace: true,
-       //bindToController:true,
         
         link: function ($scope, element, attr) {
-            debugger
             $scope.column = angular.copy($scope.column);
-            $scope.column.text = $parse($scope.column.text)($scope.row);
-            $scope.column.nullText = $parse($scope.column.nullText)($scope.row);
-            $scope.column.template = $parse($scope.column.template)($scope.row);
-            //$scope.column.template = ($scope.column.template);
+            $scope.$parent.row.$even = $scope.$parent.$even;
+            $scope.$parent.row.$first = $scope.$parent.$first;
+            $scope.$parent.row.$id = $scope.$parent.$id;
+            $scope.$parent.row.$index = $scope.$parent.$index;
+            $scope.$parent.row.$last = $scope.$parent.$last;
+            $scope.$parent.row.$middle = $scope.$parent.$middle;
+            $scope.$parent.row.$odd = $scope.$parent.$odd;
 
-
-            /*var compiled = element.replaceWith($compile(template)($scope));
-            if ($scope.column.template) {
-                element.find('.gvItemTemplate').replaceWith($compile($scope.column.template)($scope));
-            }*/
+            if ($scope.column.type == 'bound') {
+                $scope.column.text = $interpolate($scope.column.text)($scope.$parent.row);
+                $scope.column.nullText = $interpolate($scope.column.nullText)($scope.$parent.row);
+            }
         }
-        
-
     }
 
 }])
 
-app.directive('gridView', ['$compile',function ($compile) {
+app.directive('gridView', ['$compile', '$parse', function ($compile, $parse) {
 
     return {
 
         restrict: 'E',
-       /* scope: {
-            gvdataSource: '=',
-            allowSorting: '@',
-            allowPagging: '@',
-            allowSearch: '@',
-            pageSize: '@',
-            emptyText: '@'
-        },*/
-       /* template:
-                    "<div class='table-responsive'>" +
-                        "<table class='table table-striped'>" +
-                            "<thead>" +
-                                "<tr>" +
-                                    "<th ng-repeat='column in columns'>{{column.headerText}}</th>" +
-                                "</tr>" +
-                            "</thead>" +
-                            "<tbody>" +
-                                "<tr ng-repeat='row in dataSource'>" +
-                                    "<td ng-repeat='column in columns'>" +
-                                        "<div ng-switch on='column.type'>" +
-                                            "<div ng-switch-when='template'>" +
-                                                "{{column.template}}" +
-                                            "</div>" +
-                                            "<div ng-switch-when='bound'>" +
-                                                "{{ row[column.dataField] || column.text || column.nullText }}"+
-                                            "</div>" +
-                                            "<div ng-switch-when='counter'>" +
-                                                "{{ $parent.$index + 1 }}" +
-                                            "</div>" +
-                                        "</div>" +
-                                    "</td>" +
-                                "</tr>" +
-                            "</tbody>"+
-                        "</table>" + 
-                    "</div>",*/
         compile: function (element, attrs) {
 
             var gv = "";
             var data = {};
             data.columns = [];
 
-            var gvdataSource = attrs.gvdataSource;
+            var config = {
+                gvdataSource: attrs.gvdataSource || '',
+                allowSorting: attrs.allowSorting || false,
+                allowPagging: attrs.allowPagging || false,
+                allowSearch: attrs.allowSearch || false,
+                pageSize: attrs.pageSize || 10,
+                emptyText: attrs.emptyText || ''
+            }
+            
+
+            /*
+            allow-sorting="" allow-pagging="" allow-search="" page-size="10" gvdata-source="form.directory" empty-text=""
+            */
 
             var template =
 
@@ -124,11 +83,13 @@ app.directive('gridView', ['$compile',function ($compile) {
                 "<table class='table table-striped'>" +
                     "<thead>" +
                         "<tr>" +
-                            "<th ng-repeat='column in columns'>{{column.headerText}}</th>" +
+                            "<th class='gv-header' ng-repeat='column in columns'>" + 
+                                "{{column.headerText}}<i ng-if='column.sorteable' style='float:right; font-size:10px' class='glyphicon glyphicon-triangle-bottom'></i>" +
+                            "</th>" +
                         "</tr>" +
                     "</thead>" +
                     "<tbody>" +
-                        "<tr ng-repeat='row in " + gvdataSource + "'>" +
+                        "<tr ng-repeat='row in " + config.gvdataSource + "'>" +
                             "<td ng-repeat='column in columns'>" +
                                 "<grid-column column='column' row='row'></grid-column>"+
                             "</td>" +
@@ -141,11 +102,10 @@ app.directive('gridView', ['$compile',function ($compile) {
                 var column = {};
                 column.headerText = $(this).attr('header-text');
                 column.dataField = $(this).attr('data-field');
-                column.text = $(this).attr('text');
-                column.nullText = $(this).attr('null-text');
+                column.text = $(this).attr('text') || '';
+                column.nullText = $(this).attr('null-text') || '';
                 column.sorteable = $(this).attr('sorteable');
                 column.counter = $(this).attr('counter');
-                column.value = column.dataField || column.text || column.nullText;
 
                 var columnTag = $(this)[0].tagName.toLowerCase();
 
@@ -170,7 +130,6 @@ app.directive('gridView', ['$compile',function ($compile) {
 
             return function ($scope, element, attrs) {
                 $scope.columns = data.columns;
-                
                 element.replaceWith($compile(template)($scope));
             }
 
