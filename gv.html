@@ -9,21 +9,25 @@
 
 
 
+    <div class="container">
 
-    <grid-view allow-sorting="" allow-pagging="" allow-search="" page-size="10" gvdata-source="form.directory" empty-text="">
-        <columns>
-            <column header-text="#" counter="true" sorteable="true"></column>
-            <column header-text="Name"  text="{{name | uppercase}}" null-text="{{'no hay valores' | uppercase}}"></column>
-            <column header-text="Phone" data-field="phone"></column>
-            <templateColumn>
-                <button class="btn btn-danger" ng-click="pruebame($parent.$parent.$index)">Pruebame</button>
-            </templateColumn>
-        </columns>
-    </grid-view>
+        <grid-view allow-sorting="true" allow-pagging="true" allow-search="" page-size="5" gvdata-source="form.directory" empty-text="">
+            <columns>
+                <column header-text="#" counter="true"></column>
+                <column header-text="Name" sorteable="true" data-field="name" text="{{name | uppercase}}" null-text="{{'no hay valores' | uppercase}}"></column>
+                <column header-text="Phone" data-field="phone"></column>
+                <templatecolumn>
+                    <button class="btn btn-danger btn-xs" ng-click="pruebame($parent.$parent.$index)">Pruebame</button>
+                </templatecolumn>
+            </columns>
+        </grid-view>
+    </div>
 
-    
 
 
+    <button ng-click="addValue()">Prueba 2</button>
+    <button ng-click="addPage()">Add page</button>
+    <button ng-click="removePage()">Remove page</button>
 
 
     <script src="assets/js/jquery-1.10.2.min.js"></script>
