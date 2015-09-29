@@ -10,6 +10,40 @@ app.filter('offset', function () {
     };
 });
 
+app.directive('gridSearch', function () {
+    return {
+        restrict: 'E',
+        template: "<div class='form-group' ng-style='{\"width\": filterWidth}' style='transition:all .5s; float:right' >" +
+                    "<div class='input-group'>" +
+                        "<div class='input-group-addon'>" +
+                            "<a href='#' ng-click='toggleSearch()'><i class='glyphicon glyphicon-search'></i></a>" +
+                        "</div>" +
+                        "<input  type='text' placeholder='Filter' ng-focus='filterWidth = \"25%\"' ng-blur='filterWidth = \"15%\"' class='form-control' ng-model='$parent.gvTextFilter' />" +
+                    "</div>" +
+                "</div>",
+        controller: ['$scope', function ($scope) {
+            $scope.filterWidth = '15%';
+            $scope.gridSearch = {};
+            $scope.gridSearch.gvTextFilter
+            $scope.toggleSearch = function () {
+                if ($scope.filterWidth == '15%') {
+                    $scope.filterWidth = '25%'
+                }
+                else {
+                    $scope.filterWidth = '15%';
+                }
+            }
+
+            $scope.openSearch = function () {
+                $scope.filterWidth = '25%'
+            }
+            $scope.closeSearch = function () {
+                
+            }
+        }]
+    }
+})
+
 app.directive('gridPaginator', [function () {
     return {
         restrict: 'E',
@@ -17,24 +51,42 @@ app.directive('gridPaginator', [function () {
             pageSize:'@',
             currentPage: '=',
             source: '=',
+            filter:'=',
             onPageSelected:'&?'
         },
-        controller: ['$scope', function ($scope) {
+        controller: ['$scope','$filter', function ($scope, $filter) {
 
             
-            $scope.totalPage = ($scope.source.length / parseInt($scope.pageSize,10));
-            if ($scope.totalPage > Math.round($scope.totalPage)) {
-                $scope.totalPage = Math.round($scope.totalPage) + 1;
-            } else
-            {
-                $scope.totalPage = Math.round($scope.totalPage);
-            }
 
-            $scope.pageCount = [];
-            for (var i = 0; i <= $scope.totalPage - 1; i++) {
-                $scope.pageCount.push(i);
-            }
 
+            $scope.$watch('filter', function () {
+                
+                $scope.createPages();
+                
+            });
+
+            $scope.$watch('pageSize', function () {
+                $scope.createPages();
+            });
+
+           
+            $scope.createPages = function () {
+                $scope.filteredSource = $filter('filter')($scope.source, $scope.filter)
+
+                $scope.totalPage = ($scope.filteredSource.length / parseInt($scope.pageSize, 10));
+                if ($scope.totalPage > Math.round($scope.totalPage)) {
+                    $scope.totalPage = Math.round($scope.totalPage) + 1;
+                } else {
+                    $scope.totalPage = Math.round($scope.totalPage);
+                }
+
+                $scope.pageCount = [];
+                for (var i = 0; i <= $scope.totalPage - 1; i++) {
+                    $scope.pageCount.push(i);
+                }
+
+                $scope.firstPage();
+            }
             $scope.firstPage = function () {
                 $scope.selectCurrentPage(0);
             }
@@ -60,15 +112,14 @@ app.directive('gridPaginator', [function () {
             };
 
             $scope.selectCurrentPage = function (page) {
-                
                 $scope.currentPage.pageNumber = page;
                 if ($scope.onPageSelected) {
                     $scope.onPageSelected(page);
                 }
             }
         }],
-        template: "<nav>" +
-                        "<ul class='pagination'>" +
+        template: "<nav ng-if='pageCount.length > 1'>" +
+                        "<ul class='pagination pagination-sm' style='margin:0'>" +
                             "<li><a href='#' ng-click='firstPage()'><span>&laquo;</span></a></li>" +
                             "<li><a href='#' ng-click='prevPage()'><i class='glyphicon glyphicon-chevron-left'></i></a></li>" +
                             "<li ng-class='{\"active\" : page == currentPage.pageNumber}' ng-repeat='page in pageCount'><a href='#' ng-click='selectCurrentPage(page)'>{{page+1}}</a></li>" +
@@ -141,6 +192,8 @@ app.directive('gridView', ['$compile', '$parse', '$interpolate', function ($comp
         restrict: 'E',
         controller: ['$scope', function ($scope) {
             
+           
+
             $scope.sortTable = function (sortExpression) {
 
                 if (sortExpression == $scope.sorter) {
@@ -152,6 +205,15 @@ app.directive('gridView', ['$compile', '$parse', '$interpolate', function ($comp
                 }
             }
 
+
+            $scope.sameSorter = function (sortExpression) {
+                if ($scope.sorter == sortExpression || $scope.sorter == '-' + sortExpression) {
+                    return true
+                }
+                else {
+                    return false;
+                }
+            }
             $scope.isDesc = function (sortExpression) {
                 
                 if ($scope.sorter == undefined)
@@ -192,15 +254,16 @@ app.directive('gridView', ['$compile', '$parse', '$interpolate', function ($comp
             var template =
 
             "<div class='table-responsive'>" +
+                "<grid-search ng-if='" + config.allowSearch + "'></grid-search>" +
                 "<table class='table table-striped'>" +
                     "<thead>" +
                         "<tr>" +
-                            "<th class='gv-header' ng-repeat='column in columns'>" +
-                                "<div ng-if='" + config.allowSorting + "' ng-click='sortTable(column.sorter)'>" +
+                            "<th class='gv-header' ng-repeat='column in columns' ng-click='column.sorteable == true && sortTable(column.sorter)' ng-style='column.sorteable == true && {\"cursor\" : \"pointer\"}'>" +
+                                "<div ng-if='column.sorteable' ng-if='" + config.allowSorting + "'>" +
                                     "{{column.headerText}}" +
                                     "<div style='float:right;'>" +
-                                        "<i ng-hide='' ng-if='column.sorteable' style='display:block; font-size:10px' class='glyphicon glyphicon-triangle-top'></i>" +
-                                        "<i ng-hide='' ng-if='column.sorteable' style='display:block; font-size:10px' class='glyphicon glyphicon-triangle-bottom'></i>" +
+                                        "<i ng-hide='sameSorter(column.sorter)  && isDesc() == false' ng-if='column.sorteable' style='display:block; font-size:10px' class='glyphicon glyphicon-triangle-top'></i>" +
+                                        "<i ng-hide='sameSorter(column.sorter)  && isDesc() == true' ng-if='column.sorteable' style='display:block; font-size:10px' class='glyphicon glyphicon-triangle-bottom'></i>" +
                                     "</div>" +
                                 "</div>" +
                                 "<div ng-if='!" + config.allowSorting + "'>" +
@@ -210,21 +273,25 @@ app.directive('gridView', ['$compile', '$parse', '$interpolate', function ($comp
                         "</tr>" +
                     "</thead>" +
                     "<tbody>" +
-                        "<tr ng-repeat='row in " + config.gvdataSource + " | orderBy:sorter | offset: gvCurrentPage.pageNumber*gvPageSize | limitTo: gvPageSize'>" +
+                        "<tr ng-repeat='row in " + config.gvdataSource + " | filter: gvTextFilter | orderBy:sorter | offset: gvCurrentPage.pageNumber*gvPageSize | limitTo: gvPageSize'>" +
                             "<td ng-repeat='column in columns'>" +
                                 "<grid-column column='column' row='row'></grid-column>" +
                             "</td>" +
                         "</tr>" +
                     "</tbody>" +
                     "<tfoot>" +
+                        "<tr ng-if='(" + config.gvdataSource + " | filter: gvTextFilter).length == 0'>" +
+                            "<td colspan={{columns.length}}>" +
+                                "<p style='text-align:center'>" + config.emptyText + "</p>" +
+                            "</td>" +
+                        "</tr>" +
                         "<tr>" +
-                            "<td colspan='{{columns.length}}'>" +
-                                "<grid-paginator current-page='gvCurrentPage' source='" + config.gvdataSource + "' page-size='" + config.pageSize + "'  ng-if='" + config.allowPagging + "'></grid-paginator>" +
+                            "<td colspan='{{columns.length}}' style='padding-left:0'>" +
+                                "<grid-paginator ng-hide='" + config.gvdataSource + ".length < gvPageSize' current-page='gvCurrentPage' filter='gvTextFilter' source='" + config.gvdataSource + "' page-size='" + config.pageSize + "'  ng-if='" + config.allowPagging + "'></grid-paginator>" +
                             "</td>" +
                         "</tr>" +
                     "</tfoot>" +
                 "</table>" +
-                
             "</div>";
 
             element.find('columns').children().each(function () {
@@ -275,20 +342,27 @@ app.directive('gridView', ['$compile', '$parse', '$interpolate', function ($comp
 
 
             return function ($scope, element, attrs) {
+               
+                
                 if (config.allowPagging === 'false') {
                     $scope.gvPageSize = null;
                 }
                 else
                 {
-                    $scope.gvPageSize = config.pageSize;
+                    $scope.gvPageSize = config.pageSize || 10;
                 }
+
+                attrs.$observe('pageSize', function (value) {
+                    $scope.gvPageSize = value;
+                })
 
                 $scope.columns = data.columns;
                 
                 $scope.gvCurrentPage = {};
                 $scope.gvCurrentPage.pageNumber = 0;
-
-                element.replaceWith($compile(template)($scope));
+                
+                element.html('');
+                element.append($compile(template)($scope));
             }
 
         }

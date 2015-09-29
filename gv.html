@@ -4,18 +4,25 @@
     <title></title>
     <link href="assets/css/bootstrap.css" rel="stylesheet" />
 </head>
-<body ng-app="testApp" ng-controller="textController">
+<body ng-app="testApp" ng-controller="textController" style="padding-top:60px;">
 
 
 
 
     <div class="container">
 
-        <grid-view allow-sorting="true" allow-pagging="true" allow-search="" page-size="5" gvdata-source="form.directory" empty-text="">
+        <select ng-model="form.pageSize">
+            <option value='5'>[5]</option>
+            <option value='10'>[10]</option>
+            <option value='15'>[15]</option>
+        </select>
+
+        <grid-view allow-sorting="true" allow-pagging="true" allow-search="true" page-size="{{form.pageSize}}" gvdata-source="form.directory" empty-text="NO RECORDS FOUND">
             <columns>
                 <column header-text="#" counter="true"></column>
                 <column header-text="Name" sorteable="true" data-field="name" text="{{name | uppercase}}" null-text="{{'no hay valores' | uppercase}}"></column>
                 <column header-text="Phone" data-field="phone"></column>
+                <column header-text="Salario" data-field="salario" column-type="number" text="{{parseFloat(salario)}}" null-text="{{0}}"></column>
                 <templatecolumn>
                     <button class="btn btn-danger btn-xs" ng-click="pruebame($parent.$parent.$index)">Pruebame</button>
                 </templatecolumn>
