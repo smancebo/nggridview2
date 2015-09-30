@@ -14,17 +14,25 @@
         <select ng-model="form.pageSize">
             <option value='5'>[5]</option>
             <option value='10'>[10]</option>
-            <option value='15'>[15]</option>
+            <option value='15' selected="selected">[15]</option>
+            <option value='50'>[50]</option>
+            <option value='100'>[100]</option>
+        </select>
+
+        <p>Show name</p>
+        <select ng-model="form.showName">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
         </select>
 
         <grid-view allow-sorting="true" allow-pagging="true" allow-search="true" page-size="{{form.pageSize}}" gvdata-source="form.directory" empty-text="NO RECORDS FOUND">
             <columns>
-                <column header-text="#" counter="true"></column>
-                <column header-text="Name" sorteable="true" data-field="name" text="{{name | uppercase}}" null-text="{{'no hay valores' | uppercase}}"></column>
-                <column header-text="Phone" data-field="phone"></column>
-                <column header-text="Salario" data-field="salario" column-type="number" text="{{parseFloat(salario)}}" null-text="{{0}}"></column>
+                <column header-text="Name" sorteable="true" data-field="name" text="{{name | uppercase}}" null-text="{{'No name supplied' | uppercase}}"></column>
+                <column header-text="Phone" data-field="phone" null-text="No Phone supplied"></column>
+                <column header-text="Salario" data-field="salario" column-type="number" text="{{salario | currency : '$'}}" null-text="{{0 | currency : '$'}}"></column>
+                <column header-text="Hire Date" data-field="hire_date" text="{{hire_date | date : 'dd-MM-yyyy'}}" null-text="No hire date"></column>
                 <templatecolumn>
-                    <button class="btn btn-danger btn-xs" ng-click="pruebame($parent.$parent.$index)">Pruebame</button>
+                    <button class="btn btn-danger btn-xs" ng-click="pruebame(row)">Pruebame</button>
                 </templatecolumn>
             </columns>
         </grid-view>

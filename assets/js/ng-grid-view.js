@@ -16,7 +16,7 @@ app.directive('gridSearch', function () {
         template: "<div class='form-group' ng-style='{\"width\": filterWidth}' style='transition:all .5s; float:right' >" +
                     "<div class='input-group'>" +
                         "<div class='input-group-addon'>" +
-                            "<a href='#' ng-click='toggleSearch()'><i class='glyphicon glyphicon-search'></i></a>" +
+                            "<a style='cursor:pointer' ng-click='toggleSearch()'><i class='glyphicon glyphicon-search'></i></a>" +
                         "</div>" +
                         "<input  type='text' placeholder='Filter' ng-focus='filterWidth = \"25%\"' ng-blur='filterWidth = \"15%\"' class='form-control' ng-model='$parent.gvTextFilter' />" +
                     "</div>" +
@@ -120,11 +120,11 @@ app.directive('gridPaginator', [function () {
         }],
         template: "<nav ng-if='pageCount.length > 1'>" +
                         "<ul class='pagination pagination-sm' style='margin:0'>" +
-                            "<li><a href='#' ng-click='firstPage()'><span>&laquo;</span></a></li>" +
-                            "<li><a href='#' ng-click='prevPage()'><i class='glyphicon glyphicon-chevron-left'></i></a></li>" +
-                            "<li ng-class='{\"active\" : page == currentPage.pageNumber}' ng-repeat='page in pageCount'><a href='#' ng-click='selectCurrentPage(page)'>{{page+1}}</a></li>" +
-                            "<li><a href='#' ng-click='nextPage()'><i class='glyphicon glyphicon-chevron-right'></i></a></li>" +
-                            "<li><a href='#' ng-click='lastPage()'><span>&raquo;</span></a></li>" +
+                            "<li><a style='color:#23527C; cursor:pointer' ng-click='firstPage()'><span>&laquo;</span></a></li>" +
+                            "<li><a style='color:#23527C; cursor:pointer' ng-click='prevPage()'><i class='glyphicon glyphicon-chevron-left'></i></a></li>" +
+                            "<li ng-class='{\"active\" : page == currentPage.pageNumber}' ng-repeat='page in pageCount'><a style='cursor:pointer' ng-click='selectCurrentPage(page)'>{{page+1}}</a></li>" +
+                            "<li><a style='color:#23527C; cursor:pointer' ng-click='nextPage()'><i class='glyphicon glyphicon-chevron-right'></i></a></li>" +
+                            "<li><a style='color:#23527C; cursor:pointer' ng-click='lastPage()'><span>&raquo;</span></a></li>" +
                         "</ul>" + 
                   "</nav>"
                     
@@ -150,7 +150,7 @@ app.directive('gridColumn', ['$compile', '$interpolate', function ($compile, $in
 
     return {
         restrict: 'E',
-        template: "<div ng-switch on='column.type'>" +
+        template: "<div ng-switch on='column.type' ng-if='column.visible'>" +
                         "<div ng-switch-when='template' compile='{{column.template}}'></div>" +
                         "<div ng-switch-when='bound'>" +
                             "{{  column.text || row[column.dataField] || column.nullText }}" +
@@ -159,7 +159,7 @@ app.directive('gridColumn', ['$compile', '$interpolate', function ($compile, $in
                             "{{ $parent.$parent.$index + 1 }}" +
                         "</div>" +
                   "</div>",
-        replace: true,
+        replace: false,
         
         link: function ($scope, element, attr) {
             $scope.column.sorter = $scope.column.dataField;
@@ -178,7 +178,19 @@ app.directive('gridColumn', ['$compile', '$interpolate', function ($compile, $in
 
                 $scope.column.text = $interpolate($scope.column.text)($scope.$parent.row);
                 $scope.column.nullText = $interpolate($scope.column.nullText)($scope.$parent.row);
-                $scope.$parent.row[$scope.column.dataField] = $scope.$parent.row[$scope.column.dataField] == '' ? $scope.column.nullText : $scope.$parent.row[$scope.column.dataField];
+                if ($scope.$parent.row[$scope.column.dataField] == undefined || $scope.$parent.row[$scope.column.dataField] == null || $scope.$parent.row[$scope.column.dataField] == '')
+                {
+
+                    switch ($scope.column.columnType) {
+                        case "number":
+                            $scope.$parent.row[$scope.column.dataField] = 0;
+                            break;
+                        default:
+                            $scope.$parent.row[$scope.column.dataField] = $scope.column.nullText;
+                            break;
+                    }
+                    
+                }
             }
         }
     }
@@ -193,42 +205,38 @@ app.directive('gridView', ['$compile', '$parse', '$interpolate', function ($comp
         controller: ['$scope', function ($scope) {
             
            
-
+            
             $scope.sortTable = function (sortExpression) {
+                //$scope.reverse = $scope.reverse || true;
+                $scope.currentColumn = sortExpression;
+                $scope.reverse = !$scope.reverse;
 
-                if (sortExpression == $scope.sorter) {
-                    $scope.sorter = '-' + sortExpression;
-                }
-                else
-                {
-                    $scope.sorter = sortExpression;
+                switch (sortExpression.columnType) {
+                    case "number":
+                        $scope.sorter = function (value) {
+                            
+                            return parseFloat(value[$scope.currentColumn.sorter] || 0);
+                        }
+                        break;
+
+                    default:
+                       
+                        $scope.sorter = sortExpression.sorter;
+                       
+                        break;
+
                 }
             }
 
 
             $scope.sameSorter = function (sortExpression) {
-                if ($scope.sorter == sortExpression || $scope.sorter == '-' + sortExpression) {
+                if ($scope.sorter == sortExpression || $scope.currentColumn == undefined ? true : $scope.currentColumn.sorter == sortExpression) {
                     return true
                 }
                 else {
                     return false;
                 }
             }
-            $scope.isDesc = function (sortExpression) {
-                
-                if ($scope.sorter == undefined)
-                {
-                    return false;
-                }
-                if ($scope.sorter.indexOf('-') == -1) {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            };
-
         }],
         compile: function (element, attrs) {
 
@@ -258,12 +266,12 @@ app.directive('gridView', ['$compile', '$parse', '$interpolate', function ($comp
                 "<table class='table table-striped'>" +
                     "<thead>" +
                         "<tr>" +
-                            "<th class='gv-header' ng-repeat='column in columns' ng-click='column.sorteable == true && sortTable(column.sorter)' ng-style='column.sorteable == true && {\"cursor\" : \"pointer\"}'>" +
+                            "<th class='gv-header' ng-repeat='column in columns' ng-if='column.visible' ng-click='column.sorteable == true && sortTable(column)' ng-style='column.sorteable == true && {\"cursor\" : \"pointer\"}'>" +
                                 "<div ng-if='column.sorteable' ng-if='" + config.allowSorting + "'>" +
                                     "{{column.headerText}}" +
                                     "<div style='float:right;'>" +
-                                        "<i ng-hide='sameSorter(column.sorter)  && isDesc() == false' ng-if='column.sorteable' style='display:block; font-size:10px' class='glyphicon glyphicon-triangle-top'></i>" +
-                                        "<i ng-hide='sameSorter(column.sorter)  && isDesc() == true' ng-if='column.sorteable' style='display:block; font-size:10px' class='glyphicon glyphicon-triangle-bottom'></i>" +
+                                        "<i ng-hide='sameSorter(column.sorter)  && reverse == true' ng-if='column.sorteable' style='display:block; font-size:10px' class='glyphicon glyphicon-triangle-top'></i>" +
+                                        "<i ng-hide='sameSorter(column.sorter)  && reverse == false' ng-if='column.sorteable' style='display:block; font-size:10px' class='glyphicon glyphicon-triangle-bottom'></i>" +
                                     "</div>" +
                                 "</div>" +
                                 "<div ng-if='!" + config.allowSorting + "'>" +
@@ -273,8 +281,8 @@ app.directive('gridView', ['$compile', '$parse', '$interpolate', function ($comp
                         "</tr>" +
                     "</thead>" +
                     "<tbody>" +
-                        "<tr ng-repeat='row in " + config.gvdataSource + " | filter: gvTextFilter | orderBy:sorter | offset: gvCurrentPage.pageNumber*gvPageSize | limitTo: gvPageSize'>" +
-                            "<td ng-repeat='column in columns'>" +
+                        "<tr ng-repeat='row in " + config.gvdataSource + " | filter: gvTextFilter | orderBy:sorter:reverse | offset: gvCurrentPage.pageNumber*gvPageSize | limitTo: gvPageSize'>" +
+                            "<td ng-repeat='column in columns' ng-if='column.visible'>" +
                                 "<grid-column column='column' row='row'></grid-column>" +
                             "</td>" +
                         "</tr>" +
@@ -303,6 +311,9 @@ app.directive('gridView', ['$compile', '$parse', '$interpolate', function ($comp
                 column.nullText = $(this).attr('null-text') || '';
                 column.sorteable = $(this).attr('sorteable') == undefined ? 'true' : $(this).attr('sorteable');
                 column.counter = $(this).attr('counter') || false;
+                column.columnType = $(this).attr('column-type') || 'string';
+                column.visible = $(this).attr('visible') || 'true';
+
                 var columnTag = $(this)[0].tagName.toLowerCase();
 
                 
@@ -319,6 +330,21 @@ app.directive('gridView', ['$compile', '$parse', '$interpolate', function ($comp
                     throw 'Sorteable value not valid, should be true or false and has ' + column.sorteable;
                 }
 
+                if (column.visible === 'false') {
+                    column.visible = false;
+                }
+                else if (column.visible === 'true') {
+                    column.visible = true;
+                }
+                else
+                {
+                    //throw 'Visible value not valid, should be true or false and has ' + column.visible;
+                }
+
+                /*attrs.$observe('visible', function (value) {
+                    debugger
+                    column.visible = value;
+                })*/
 
                 switch (columnTag) {
                     case 'column':
