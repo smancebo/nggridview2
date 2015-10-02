@@ -27,13 +27,16 @@
 
         <grid-view allow-sorting="true" allow-pagging="true" allow-search="true" page-size="{{form.pageSize}}" gvdata-source="form.directory" empty-text="NO RECORDS FOUND">
             <columns>
+                <templateColumn>
+                    <input type="checkbox" ng-model="row.selected" />
+                </templateColumn>
                 <column header-text="Name" sorteable="true" data-field="name" text="{{name | uppercase}}" null-text="{{'No name supplied' | uppercase}}"></column>
                 <column header-text="Phone" data-field="phone" null-text="No Phone supplied"></column>
                 <column header-text="Salario" data-field="salario" column-type="number" text="{{salario | currency : '$'}}" null-text="{{0 | currency : '$'}}"></column>
                 <column header-text="Hire Date" data-field="hire_date" text="{{hire_date | date : 'dd-MM-yyyy'}}" null-text="No hire date"></column>
-                <templatecolumn>
+                <templateColumn>
                     <button class="btn btn-danger btn-xs" ng-click="pruebame(row)">Pruebame</button>
-                </templatecolumn>
+                </templateColumn>
             </columns>
         </grid-view>
     </div>

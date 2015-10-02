@@ -112,22 +112,18 @@ app.controller('textController', ['$scope', function ($scope) {
     }
 
     $scope.addValue = function () {
-        //$scope.form.directory.push({name: 'prueba2', phone: '12345679'})
-        console.log($scope);
+        //$scope.form.directory = [];
+        $scope.form.directory = angular.copy($scope.form.directory);
+        
+        /*$scope.form.directory = $scope.form.directory.filter(function (e) {
+            return e.selected == true;
+        });*/
+
+        
     }
 
-    $scope.addPage = function () {
-        $scope.gvCurrentPage++;
-    }
-
-    $scope.removePage = function () {
-        $scope.gvCurrentPage--;
-    }
-
-    $scope.parseFloat = function (value) {
-        return parseFloat(value);
-    }
-
+   
+    
     $scope.procesar = function (name) {
         return 'procesado el nombre de ' + name;
     }

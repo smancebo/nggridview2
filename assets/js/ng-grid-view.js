@@ -125,7 +125,8 @@ app.directive('gridPaginator', [function () {
                             "<li ng-class='{\"active\" : page == currentPage.pageNumber}' ng-repeat='page in pageCount'><a style='cursor:pointer' ng-click='selectCurrentPage(page)'>{{page+1}}</a></li>" +
                             "<li><a style='color:#23527C; cursor:pointer' ng-click='nextPage()'><i class='glyphicon glyphicon-chevron-right'></i></a></li>" +
                             "<li><a style='color:#23527C; cursor:pointer' ng-click='lastPage()'><span>&raquo;</span></a></li>" +
-                        "</ul>" + 
+                        "</ul>" +
+                        "<div class='pull-right'>{{((currentPage.pageNumber + 1) * pageSize) + \" of \" + source.length}}</div>" +
                   "</nav>"
                     
     }
@@ -172,6 +173,15 @@ app.directive('gridColumn', ['$compile', '$interpolate', function ($compile, $in
             $scope.$parent.row.$middle = $scope.$parent.$middle;
             $scope.$parent.row.$odd = $scope.$parent.$odd;
 
+            /*
+            function editRow(element) {
+
+            }
+
+            function cancelEditRow(element) {
+
+            }*/
+            
             
 
             if ($scope.column.type == 'bound') {
@@ -296,6 +306,7 @@ app.directive('gridView', ['$compile', '$parse', '$interpolate', function ($comp
                         "<tr>" +
                             "<td colspan='{{columns.length}}' style='padding-left:0'>" +
                                 "<grid-paginator ng-hide='" + config.gvdataSource + ".length < gvPageSize' current-page='gvCurrentPage' filter='gvTextFilter' source='" + config.gvdataSource + "' page-size='" + config.pageSize + "'  ng-if='" + config.allowPagging + "'></grid-paginator>" +
+                                
                             "</td>" +
                         "</tr>" +
                     "</tfoot>" +
